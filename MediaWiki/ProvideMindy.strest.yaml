@@ -1,0 +1,113 @@
+# assumes ProvideRootUser
+
+version: 2
+
+variables:
+  Mindy:
+    name: "Mindy"
+    email: "mindy@example.com"
+    password: <$ Faker( "Mindy.password" ) $>
+
+requests:
+  # Create a new user account
+  MindyCreateAccount:
+    request:
+      url: <$ base $>/api.php
+      method: GET
+      queryString:
+      - name: action
+        value: createaccount
+      - name: format
+        value: json
+      postData:
+        mimeType: application/x-www-form-urlencoded
+        params:
+        - name: username
+          value: <$ Mindy.name $> 
+        - name: password
+          value: <$ Mindy.password $> 
+        - name: retype
+          value: <$ Mindy.password $> 
+        - name: email
+          value: <$ Mindy.email $> 
+        - name: creationtoken
+          value: <$ RootUserTokens.tokens.creataccount $> 
+    validate:
+      - jsonpath: creataccount.status
+        expect: PASS
+
+  # Add to sysop group
+  MindyAddGroups:
+    request:
+      url: <$ base $>/api.php
+      method: GET
+      queryString:
+      - name: action
+        value: userrights
+      - name: format
+        value: json
+      postData:
+        mimeType: application/x-www-form-urlencoded
+        params:
+        - name: user
+          value: <$ Mindy.name $> 
+        - name: token
+          value: <$ Mindy.password $> 
+        - name: add
+          value: sysop
+    validate:
+      - jsonpath: userrights.added[0]
+        expect: 'sysop'
+
+  MindyLoginToken:
+    request:
+      url: <$ base $>/api.php
+      method: GET
+      queryString:
+      - name: action
+        value: query
+      - name: meta
+        value: tokens
+      - name: type
+        value: login
+      - name: format
+        value: json
+
+  # Log in
+  MindyLogIn:
+    request:
+      method: POST
+      url: <$ base $>/api.php
+      queryString:
+      - name: action
+        value: login
+      - name: format
+        value: json
+      postData:
+        mimeType: multipart/form-data
+        params:
+        - name: lgname
+          value: <$ Mindy.name $>
+        - name: lgpassword
+          value: <$ Mindy.password $>
+        - name: lgtoken
+          value: <$ MindyLoginToken.tokens.login $>
+    validate:
+      - jsonpath: login.result
+        expect: Success
+
+  # Get tokens
+  MindyTokens:
+    request:
+      url: <$ base $>/api.php
+      method: GET
+      queryString:
+      - name: action
+        value: query
+      - name: meta
+        value: tokens
+      - name: type
+        value: edit
+      - name: format
+        value: json
+

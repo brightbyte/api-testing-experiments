@@ -1,0 +1,5 @@
+---
+- config.strest.yaml
+- ProvideRootUser.strest.yaml
+- ProvideMindy.strest.yaml
+- tests/

@@ -1,0 +1,237 @@
+# assumes all fixtures exist
+
+version: 2
+
+variables:
+  Eve: # No namespacing. This is going to get confusing.
+    name: Eve <$ Faker( "BlockUser.Eve.name" ) $>
+    email: "eve@example.com"
+    password: <$ Faker( "BlockUser.Eve.password" ) $>
+
+  BlockUserTitle: BlockUser_<$ Faker( "BlockUser.Title" ) $>
+
+requests:
+  # Create a new user account
+  EveCreateAccount:
+    request:
+      url: <$ base $>/api.php
+      method: GET
+      queryString:
+      - name: action
+        value: createaccount
+      - name: format
+        value: json
+      postData:
+        mimeType: application/x-www-form-urlencoded
+        params:
+        - name: username
+          value: <$ Eve.name $> 
+        - name: password
+          value: <$ Eve.password $> 
+        - name: retype
+          value: <$ Eve.password $> 
+        - name: email
+          value: <$ Eve.email $> 
+        - name: creationtoken
+          value: <$ RootUserTokens.tokens.creataccount $> 
+    validate:
+      - jsonpath: creataccount.status
+        expect: PASS
+
+  EveLoginToken:
+    request:
+      url: <$ base $>/api.php
+      method: GET
+      queryString:
+      - name: action
+        value: query
+      - name: meta
+        value: tokens
+      - name: type
+        value: login
+      - name: format
+        value: json
+
+  # Log in
+  EveLogIn:
+    request:
+      method: POST
+      url: <$ base $>/api.php
+      queryString:
+      - name: action
+        value: login
+      - name: format
+        value: json
+      postData:
+        mimeType: multipart/form-data
+        params:
+        - name: lgname
+          value: <$ Eve.name $>
+        - name: lgpassword
+          value: <$ Eve.password $>
+        - name: lgtoken
+          value: <$ EveLoginToken.tokens.login $>
+    validate:
+      - jsonpath: login.result
+        expect: Success
+
+  # Get edit token for Eve
+  EveTokens:
+    request:
+      url: <$ base $>/api.php
+      method: GET
+      queryString:
+      - name: action
+        value: query
+      - name: meta
+        value: tokens
+      - name: type
+        value: edit
+      - name: format
+        value: json
+
+  # Eve can edit
+  EveEdit1:
+    request:
+        url: <$ base $>/api.php
+        method: GET
+        queryString:
+        - name: action
+          value: edit
+        - name: format
+          value: json
+        - name: title
+          value: <$ BlockUserTitle $>
+        postData:
+          mimeType: application/x-www-form-urlencoded
+          params:
+          - name: token
+            value: <$ EveTokens.tokens.edit $>
+          - name: summary
+            value: test edit one
+          - name: text
+            value: Can edit
+    validate:
+        - jsonpath: edit.result
+          expect: Success
+            
+  # Get a csrf token for Mindy
+  # FIXME: we need to first log out Eve and log in Mindy!
+  # There is no way to have them both logged in at the same time!
+  MindyToken:
+    request:
+      url: <$ base $>/api.php
+      method: GET
+      queryString:
+      - name: action
+        value: query
+      - name: meta
+        value: tokens
+      - name: type
+        value: csrf
+      - name: format
+        value: json
+
+  MindyBlocksEve:
+      request:
+        url: <$ base $>/api.php
+        method: GET
+        queryString:
+          - name: action
+            value: block
+          - name: user
+            value: <$ Eve.name $>
+        postData:
+          mimeType: application/x-www-form-urlencoded
+          params:
+            - name: token
+              value: <$ MindyToken.tokens.csrf $>
+            - name: reason
+              value: testing
+      validate:
+        - jsonpath: edit.result
+          expect: Success
+            
+  # Eve can NOT edit
+  # FIXME: we need to first log out Mindy and log in Eve!
+  # There is no way to have them both logged in at the same time!
+  EvenCannotEdit:
+    request:
+        url: <$ base $>/api.php
+        method: GET
+        queryString:
+        - name: action
+          value: edit
+        - name: format
+          value: json
+        - name: title
+          value: <$ BlockUserTitle $>
+        postData:
+          mimeType: application/x-www-form-urlencoded
+          params:
+          - name: token
+            value: <$ EveTokens.tokens.edit $>
+          - name: summary
+            value: test edit two
+          - name: text
+            value: Can I edit?
+    validate:
+        - jsonpath: error.code
+          expect: permissiondenied
+
+  # Mindy unblocks
+  # FIXME: we need to first log out Eve and log in Mindy!
+  # There is no way to have them both logged in at the same time!
+  # We probably have to get new tokens as well, the old ones
+  # were invalidated by logging out!
+
+  MindyUnblocksEve:
+      request:
+        url: <$ base $>/api.php
+        method: GET
+        queryString:
+          - name: action
+            value: unblock
+          - name: user
+            value: <$ Eve.name $>
+        postData:
+          mimeType: application/x-www-form-urlencoded
+          params:
+            - name: token
+              value: <$ MindyToken.tokens.csrf $>
+            - name: reason
+              value: testing
+      validate:
+        - jsonpath: edit.result
+          expect: Success
+ 
+  # Eve can edit again
+  EveEdit2:
+    request:
+        url: <$ base $>/api.php
+        method: GET
+        queryString:
+        - name: action
+          value: edit
+        - name: format
+          value: json
+        - name: title
+          value: <$ BlockUserTitle $>
+        postData:
+          mimeType: application/x-www-form-urlencoded
+          params:
+          - name: token
+            value: <$ EveTokens.tokens.edit $>
+          - name: summary
+            value: test edit three
+          - name: text
+            value: Yea, I can edit!
+    validate:
+        - jsonpath: edit.result
+          expect: Success
+
+# TODO: test...
+# self-block
+# partial block
+# edit own user page
+# ...

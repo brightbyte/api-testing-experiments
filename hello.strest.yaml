@@ -1,0 +1,13 @@
+version: 2                            # only version at the moment
+
+requests:                             # all test requests will be listed here
+  testRequest:                        # name the request however you want
+    request:
+      url: https://postman-echo.com/get  # required
+      method: GET                       # required
+      queryString:
+      - name: foo1
+        value: bar1
+      - name: foo2
+        value: bar2
+    # log: true # uncomment this to log the response

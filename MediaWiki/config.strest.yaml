@@ -1,0 +1,5 @@
+variables:
+  base: http://default.web.mw.localhost:8080/mediawiki/
+  root:
+    user: root
+    password: asdfqwerty

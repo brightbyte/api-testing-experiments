@@ -1,0 +1,55 @@
+version: 2
+
+requests:
+  # Get a login token
+  RootUserGetLoginToken:
+    request:
+      url: <$ base $>/api.php
+      method: GET
+      queryString:
+      - name: action
+        value: query
+      - name: meta
+        value: tokens
+      - name: type
+        value: login
+      - name: format
+        value: json
+
+  # Log in
+  RootUserLogIn:
+    request:
+      method: POST
+      url: <$ base $>/api.php
+      queryString:
+      - name: action
+        value: login
+      - name: format
+        value: json
+      postData:
+        mimeType: multipart/form-data
+        params:
+        - name: lgname
+          value: <$ root.user $>
+        - name: lgpassword
+          value: <$ root.password $>
+        - name: lgtoken
+          value: <$ RootUserGetLoginToken.content.tokens.login $>
+    validate:
+      - jsonpath: content.login.result
+        expect: Success
+
+  # Get tokens
+  RootUserTokens:
+    request:
+      url: <$ base $>/api.php
+      method: GET
+      queryString:
+      - name: action
+        value: query
+      - name: meta
+        value: tokens
+      - name: type
+        value: createaccount|edit
+      - name: format
+        value: json
