@@ -1,5 +1,6 @@
 <?php
 
+use Codeception\Util\Fixtures;
 
 /**
  * Inherited Methods
@@ -20,7 +21,18 @@ class ApiTester extends \Codeception\Actor
 {
     use _generated\ApiTesterActions;
 
-   /**
-    * Define custom actions here
-    */
+    private $currentUser = null;
+
+    public function becomeUser( $name, $data = [] ) {
+        if ( $this->currentUser ) {
+            $this->saveSessionSnapshot( "API-USER-{$this->currentUser}" );
+        }
+
+        $data = Fixtures::get( "API-USER-$name" );
+
+        $this->loadSessionSnapshot( "API-USER-$name" );
+
+        // FIXME: ensure snapshot is saved automatically after every test
+        return $data;
+    }
 }

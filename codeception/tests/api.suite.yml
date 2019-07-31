@@ -1,7 +1,9 @@
-actor: ApiTester
+actor: MediaWikiActionApiTester
 modules:
     enabled:
         - \Helper\Api
+        - \Helper\MediaWikiActionApi
+        - \Helper\Uniq
         - REST:
               url: "http://default.web.mw.localhost:8080/mediawiki/"
               depends: PhpBrowser
