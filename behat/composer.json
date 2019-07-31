@@ -1,0 +1,7 @@
+{
+    "require-dev": {
+        "deminy/behat-rest-testing": "~3.0.0"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
